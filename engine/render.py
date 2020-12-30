@@ -5,8 +5,9 @@ class Render:
 
     @staticmethod
     def draw_frame():
-        print('[ r ] Draw Frame')
+        return
+        # print('[ r ] Draw Frame')
 
     @staticmethod
     def execute():
-        draw_frame()
+        Render.draw_frame()
