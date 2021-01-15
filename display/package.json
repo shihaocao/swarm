@@ -1,0 +1,30 @@
+{
+  "name": "battlehack2020-viewer",
+  "version": "1.0.0",
+  "description": "Viewer for Battlehack 2020 replay files (from scrimmages)",
+  "main": "index.js",
+  "scripts": {
+    "test": "echo \"Error: no test specified\" && exit 1",
+    "start": "node index.js"
+  },
+  "repository": {
+    "type": "git",
+    "url": "git+https://github.com/rzhan11/battlehack2020-viewer.git"
+  },
+  "author": "",
+  "license": "ISC",
+  "bugs": {
+    "url": "https://github.com/rzhan11/battlehack2020-viewer/issues"
+  },
+  "homepage": "https://github.com/rzhan11/battlehack2020-viewer#readme",
+  "dependencies": {
+    "bootstrap": "^4.4.1",
+    "bootstrap-social": "^5.1.1",
+    "express": "^4.17.1",
+    "font-awesome": "^4.7.0",
+    "fs": "0.0.1-security",
+    "hbs": "^4.1.1",
+    "jquery": "^3.5.0",
+    "popper.js": "^1.16.1"
+  }
+}

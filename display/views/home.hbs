@@ -1,0 +1,505 @@
+<!DOCTYPE html>
+<html>
+
+<head>
+	<meta charset="utf-8">
+	<meta name="viewport" content="width=device-width, initial-scale=1, shrink-to-fit=no">
+	<meta http-equiv="x-ua-compatible" content="ie=edge">
+
+
+	<link href="../node_modules/bootstrap/dist/css/bootstrap.css" rel="stylesheet" type="text/css">
+	<link rel="stylesheet" href="../node_modules/font-awesome/css/font-awesome.min.css">
+	<link rel="stylesheet" href="../node_modules/bootstrap-social/bootstrap-social.css">
+	<link rel="stylesheet" type="text/css" href="css/style.css" />
+	<title>Battlehack2020 Viewer</title>
+</head>
+<style>
+	body {
+		font-family: 'Open Sans', sans-serif
+	}
+</style>
+
+<body>
+
+	<div id="helpModal" class="modal fade" role="dialog">
+		<div class="modal-dialog modal-lg" role="content">
+			<div class="modal-content">
+				<div class="modal-body">
+					<p>'A/D' or 'Left/Right' : Change frames</p>
+					<p>'Space' : Play/Pause</p>
+					<p>'W/S' or 'Up/Down' : Change speed</p>
+				</div>
+			</div>
+		</div>
+	</div>
+
+	<div class="container-fluid">
+		<div class="row row-content top-pad">
+			<div class="col-8">
+				<canvas class="board" id="map-canvas" height="0" width="0"></canvas>
+				<br />
+				<div align="center">
+					<p id="white-pawn-count-text"></p>
+					<p id="black-pawn-count-text"></p>
+					<p id="game-info-text"></p>
+				</div>
+			</div>
+			<div class="col-4">
+				<h1>Battlehack 2020 Viewer</h1>
+				<p>
+					Check us out on Github: <a class="btn btn-social-icon btn-github" href="https://github.com/rzhan11/battlehack2020-viewer"><i class="fa fa-github"></i></a>
+				</p>
+				<hr />
+				<label class="btn btn-primary btn-small">
+				    <input type="file" id="file-input"/>
+				    <i></i> Upload Replay File
+				</label>
+				<hr />
+				<h2>Replay Information:</h2>
+				<p id="metadata-text"></p>
+				<hr />
+				<h2>Time Controls:</h2>
+				<div class="row row-content">
+					<div class='col-2 align-self-center'>
+						<p class='no-margin'>Round:</p>
+					</div>
+					<div class="col-auto">
+						<button id="prev-round-button" class="btn btn-primary btn-sm">&lt; Prev</button>
+					</div>
+					<div class="col-5" align="center">
+						<p style="display:inline" id="round-text">0 / 0</p>
+					</div>
+					<div class="col-auto">
+						<button id="next-round-button" class="btn btn-primary btn-sm">Next &gt;</button>
+					</div>
+				</div>
+
+				<div class="row row-content">
+					<div class="col-2 align-self-center">
+						<p class='no-margin'>Speed:</p>
+					</div>
+					<div class="col-auto">
+						<button id="slower-speed-button" class="btn btn-primary btn-sm">&lt; Prev</button>
+					</div>
+					<div class="col-5" align="center">
+						<p style=" display:inline" id="speed-text"></p>
+					</div>
+					<div class="col-auto">
+						<button id="faster-speed-button" class="btn btn-primary btn-sm">Next &gt;</button>
+					</div>
+				</div>
+				<div class="slidecontainer">
+					<input type="range" min="1" max="1" value="0" class="slider" id="frame-range" style="width: calc(100% - 40px); max-width: 100%">
+				</div>
+				<button class="btn btn-primary btn-small" id="play-button">Play</button>
+				<button class="btn btn-primary btn-small" id="help-modal-button">Help</button>
+				<br>
+			</div>
+		</div>
+	</div>
+
+	<script src="../node_modules/jquery/dist/jquery.slim.min.js"></script>
+	<script src="../node_modules/popper.js/dist/umd/popper.min.js"></script>
+	<script src="../node_modules/bootstrap/dist/js/bootstrap.min.js"></script>
+	<script type="text/javascript">
+		"use strict";
+
+		$(document).ready(function() {
+			$("#help-modal-button").click(function() {
+				$("#helpModal").modal();
+			});
+		});
+
+		const WHITE = "#FFFFFF"
+		const LIGHT_GRAY = "#CFCFCF"
+		const MEDIUM_GRAY = "#9F9F9F"
+		const DARK_GRAY = "#7F7F7F"
+		const BLACK = "#444444";
+		const RED = "#FF0000";
+		const BLUE = "#0000FF";
+		const YELLOW = "#FFFF00";
+
+		var outerPadding = 5;
+		var innerPadding = 3;
+		var squareSize = 35;
+		var wordFontSize = 15;
+		var wordOffset = 3;
+		var edgeWidth = 10;
+
+		const canvas = document.getElementById('map-canvas');
+		const context = canvas.getContext('2d');
+
+        var metadataText = document.getElementById("metadata-text");
+        var metadata = {};
+
+		function drawFrame() {
+			canvas.width = 2 * outerPadding + (frameWidth - 1) * innerPadding + frameWidth * squareSize;
+			canvas.height = 2 * outerPadding + (frameHeight - 1) * innerPadding + frameHeight * squareSize;
+
+			// background
+			context.beginPath();
+			context.rect(0, 0, canvas.width, canvas.height);
+			context.closePath();
+			context.fillStyle = DARK_GRAY;
+			context.fill();
+
+			// font settings
+			context.font = wordFontSize + "pt sans-serif";
+			context.fillStyle = BLACK;
+			context.textAlign = "center";
+			context.textBaseline = 'middle';
+
+			var frame = frames[roundNum];
+			whitePawnCount = 0;
+			blackPawnCount = 0;
+			for (var i = 0; i < frameHeight; i++) {
+				for (var j = 0; j < frameWidth; j++) {
+					var x = outerPadding + i * innerPadding + i * squareSize;
+					var y = outerPadding + j * innerPadding + j * squareSize;
+					context.beginPath();
+					context.rect(y, x, squareSize, squareSize);
+					context.closePath();
+
+					if (frame[i][j][0] == "N") {
+						if ((i + j) % 2 == 0) {
+							context.fillStyle = LIGHT_GRAY;
+						} else {
+							context.fillStyle = MEDIUM_GRAY;
+						}
+					} else if (frame[i][j][0] == "W") {
+						context.fillStyle = WHITE;
+						whitePawnCount++;
+					} else if (frame[i][j][0] == "B") {
+						context.fillStyle = BLACK;
+						blackPawnCount++;
+					}
+					context.fill();
+
+					if (frame[i][j][0] != "N") {
+						if (frame[i][j][0] == "W") {
+							context.fillStyle = BLUE;
+						} else if (frame[i][j][0] == "B") {
+							context.fillStyle = RED;
+						}
+						var wx = wordOffset + outerPadding + i * innerPadding + (i + 0.5) * squareSize;
+						var wy = outerPadding + j * innerPadding + (j + 0.5) * squareSize;
+						context.fillText(frame[i][j][1], wy, wx);
+					}
+				}
+			}
+
+			if (roundNum > 1) {
+				var currentPawns = {};
+				var prevPawns = {};
+				var prevFrame = frames[roundNum - 1];
+				for (var i = 0; i < frameHeight; i++) {
+					for (var j = 0; j < frameWidth; j++) {
+						if (frame[i][j][0] != "N") {
+							currentPawns[frame[i][j][1]] = [i, j, frame[i][j][0]];
+						}
+						if (prevFrame[i][j][0] != "N") {
+							prevPawns[prevFrame[i][j][1]] = [i, j];
+						}
+					}
+				}
+
+				for (var id in currentPawns) {
+					if (id in prevPawns) {
+						var curx = currentPawns[id][0];
+						var cury = currentPawns[id][1];
+						var oldx = prevPawns[id][0];
+						var oldy = prevPawns[id][1];
+						if (curx == oldx && cury == oldy) {
+							continue;
+						}
+
+						if (currentPawns[id][2] == "W") {
+							context.fillStyle = BLUE;
+						} else {
+							context.fillStyle = RED;
+						}
+						context.globalAlpha = 0.4;
+						drawEdge(currentPawns[id], prevPawns[id]);
+						context.globalAlpha = 1.0;
+					}
+				}
+			}
+		}
+
+		function drawEdge (start, end) {
+			var start_x = outerPadding + start[0] * innerPadding + (start[0] + 0.5) * squareSize;
+			var start_y = outerPadding + start[1] * innerPadding + (start[1] + 0.5) * squareSize;
+			var end_x = outerPadding + end[0] * innerPadding + (end[0] + 0.5) * squareSize;
+			var end_y = outerPadding + end[1] * innerPadding + (end[1] + 0.5) * squareSize;
+			var dx = end[0] - start[0];
+			var dy = end[1] - start[1];
+			var magnitude = Math.sqrt(dx * dx + dy * dy);
+			var x_offset = -dy / magnitude * edgeWidth / 2;
+			var y_offset = dx / magnitude * edgeWidth / 2;
+
+
+			context.beginPath();
+			context.moveTo(start_y + y_offset, start_x + x_offset);
+			context.lineTo(start_y - y_offset, start_x - x_offset);
+			context.lineTo(end_y - y_offset, end_x - x_offset);
+			context.lineTo(end_y + y_offset, end_x + x_offset);
+			context.lineTo(start_y + y_offset, start_x + x_offset);
+			context.closePath();
+
+			context.fill();
+		}
+
+
+		function displayMetadata() {
+			metadataText.innerHTML = "White: " + metadata.whiteTeamName + "<br>";
+			metadataText.innerHTML += "Black: " + metadata.blackTeamName + "<br>";
+			metadataText.innerHTML += "Version: " + metadata.version;
+		};
+
+		var fileInput = document.getElementById("file-input");
+		fileInput.addEventListener("change", uploadMap, false);
+
+		var loadedFrames = false;
+		var frames = [];
+		var frameWidth = -1;
+		var frameHeight = -1;
+		var whitePawnCount = 0;
+		var blackPawnCount = 0;
+		var winner = "";
+
+		var roundNum = 0;
+		var frameSpeed = 8;
+		var minFrameSpeed = 1;
+		var maxFrameSpeed = 64;
+		var framePlaying = false;
+		var drawMoveTrace = true;
+
+		function uploadMap(event) {
+			if (event.target.files.length > 0) {
+				var reader = new FileReader();
+				reader.onload = function(event) {
+					// do stuff here
+					loadData(event.target.result);
+				}
+				reader.readAsText(event.target.files[0]);
+			}
+		}
+
+		function loadData(data) {
+			var lines = data.split("\n");
+
+			if (lines[0].substring(0, 8) == "Team 1: ") {
+				metadata.whiteTeamName = lines[0].substring(8);
+				metadata.blackTeamName = lines[1].substring(8);
+				metadata.version = lines[3].substring(9);
+			} else {
+				metadata.whiteTeamName = "Local";
+				metadata.blackTeamName = "Local";
+				metadata.version = "Local";
+			}
+
+			// load game frames
+			var index = 0;
+			while (true) {
+				if (lines[index].length < 5) {
+					if (lines[index + 1].length == 112) {
+						index += 1;
+						break;
+					}
+				}
+				index += 1;
+			}
+
+			console.log("Frames start on line " + index);
+			// console.log(lines[index]);
+
+			var boardSize = 0;
+			for (var i = 0; i < lines[index].length; i++) {
+				if (lines[index][i] == "[") {
+					boardSize += 1;
+				}
+			}
+			frameWidth = frameHeight = boardSize;
+
+
+			frames = [
+				[]
+			];
+			var fIndex = 1;
+			while (true) {
+				if (lines[index].substring(0, 4) == "Team") {
+					winner = lines[index].substring(5, 10);
+					break;
+				}
+				frames.push(new Array(frameHeight));
+				for (var i = 0; i < frameHeight; i++) {
+					frames[fIndex][i] = lines[index].split("]");
+					frames[fIndex][i].pop();
+					for (var j = 0; j < frameWidth; j++) {
+						var temp = frames[fIndex][i][j].trim().substring(1).trim();
+						if (temp == "") {
+							frames[fIndex][i][j] = ["N", 0];
+						} else {
+							frames[fIndex][i][j] = [temp.charAt(0), parseInt(temp.substring(1).trim())];
+						}
+					}
+					index += 1;
+				}
+				index += 1;
+				fIndex += 1;
+			}
+
+			console.log("Read " + (frames.length - 1) + " frames");
+
+			loadedFrames = true;
+			metadata.maxRound = frames.length - 1;
+			// set up range slider
+			frameRange.max = metadata.maxRound;
+			frameRange.oninput = function() {
+				setRoundNum(parseInt(this.value))
+			}
+
+			// update screen
+			displayMetadata();
+			setRoundNum(1);
+		}
+
+		var prevRoundButton = document.getElementById("prev-round-button");
+		var nextRoundButton = document.getElementById("next-round-button");
+		var roundText = document.getElementById("round-text");
+
+		var slowerSpeedButton = document.getElementById("slower-speed-button");
+		var fasterSpeedButton = document.getElementById("faster-speed-button");
+		var speedText = document.getElementById("speed-text");
+		speedText.innerHTML = frameSpeed;
+
+		var playButton = document.getElementById("play-button");
+
+		var frameRange = document.getElementById("frame-range");
+
+		var whitePawnCountText = document.getElementById("white-pawn-count-text");
+		var blackPawnCountText = document.getElementById("black-pawn-count-text");
+		var gameInfoText = document.getElementById("game-info-text");
+
+		prevRoundButton.onclick = prevRound;
+		nextRoundButton.onclick = nextRound;
+
+		slowerSpeedButton.onclick = decreaseSpeed;
+		fasterSpeedButton.onclick = increaseSpeed;
+
+		playButton.onclick = changePlay;
+
+		function prevRound() {
+			if (loadedFrames) {
+				if (roundNum > 1) {
+					setRoundNum(roundNum - 1);
+					frameRange.value = roundNum - 1
+				}
+			}
+		}
+
+		function nextRound() {
+			if (loadedFrames) {
+				if (roundNum < metadata.maxRound) {
+					setRoundNum(roundNum + 1);
+					frameRange.value = roundNum + 1
+				}
+			}
+		}
+
+		function setRoundNum(num) {
+			roundNum = num;
+			roundText.innerHTML = roundNum + " / " + metadata.maxRound;
+			drawFrame();
+			displayMetadata();
+
+			// display game info text
+			whitePawnCountText.style.color = BLUE;
+			whitePawnCountText.innerHTML = "White Pawns: " + whitePawnCount + "<br>";
+			blackPawnCountText.style.color = RED;
+			blackPawnCountText.innerHTML = "Black Pawns: " + blackPawnCount + "<br>";
+			if (num == metadata.maxRound) {
+				gameInfoText.innerHTML = "Winner: ";
+				if (winner == "WHITE") {
+					gameInfoText.style.color = BLUE;
+					gameInfoText.innerHTML += metadata.whiteTeamName;
+				} else {
+					gameInfoText.style.color = RED;
+					gameInfoText.innerHTML += metadata.blackTeamName;
+				}
+				gameInfoText.innerHTML += " (" + winner + ")";
+			} else {
+				gameInfoText.innerHTML = "";
+			}
+		}
+
+		function decreaseSpeed() {
+			if (frameSpeed > minFrameSpeed) {
+				frameSpeed /= 2;
+				speedText.innerHTML = frameSpeed;
+			}
+		}
+
+		function increaseSpeed() {
+			if (frameSpeed < maxFrameSpeed) {
+				frameSpeed *= 2;
+				speedText.innerHTML = frameSpeed;
+			}
+		}
+
+		function changePlay() {
+			if (loadedFrames) {
+				framePlaying = !framePlaying;
+				if (framePlaying) {
+					playButton.innerHTML = "Pause";
+				} else {
+					playButton.innerHTML = "Play";
+				}
+			}
+		}
+
+		document.addEventListener('keydown', (e) => {
+			if (e.code === "ArrowLeft" || e.key == "a") {
+				if (framePlaying) {
+					changePlay();
+				}
+				prevRound();
+			}
+			if (e.code === "ArrowRight" || e.key == "d") {
+				if (framePlaying) {
+					changePlay();
+				}
+				nextRound();
+			}
+			if (e.code === "ArrowDown" || e.key == "s") {
+				decreaseSpeed();
+			}
+			if (e.code === "ArrowUp" || e.key == "w") {
+				increaseSpeed();
+			}
+			if (e.code === "Space") {
+				changePlay();
+			}
+		});
+
+		var intervalTime = 10;
+		var timeSinceUpdate = 0;
+		setInterval(function() {
+			if (loadedFrames && framePlaying) {
+				timeSinceUpdate += intervalTime;
+				var frameChange = Math.trunc(timeSinceUpdate / (1000 / frameSpeed));
+				for (var i = 0; i < frameChange; i++) {
+					nextRound();
+					timeSinceUpdate -= frameChange * (1000 / frameSpeed);
+				}
+				if (roundNum == metadata.maxRound) {
+					changePlay();
+					timeSinceUpdate = 0;
+				}
+			}
+		}, intervalTime);
+	</script>
+
+</body>
+
+</html>
