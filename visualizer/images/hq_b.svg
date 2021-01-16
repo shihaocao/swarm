@@ -1,0 +1,19 @@
+<svg width="800" height="800" xmlns="http://www.w3.org/2000/svg" style="vector-effect: non-scaling-stroke;" stroke="null">
+ <!-- Created with Method Draw - http://github.com/duopixel/Method-Draw/ -->
+ <defs style="vector-effect: non-scaling-stroke;" stroke="null">
+  <filter id="svg_15_blur">
+   <feGaussianBlur stdDeviation="0.2" in="SourceGraphic"/>
+  </filter>
+ </defs>
+ <g stroke="null">
+  <title stroke="null">background</title>
+  <rect stroke="null" fill="#007fff" id="canvas_background" height="802" width="802" y="-1" x="-1"/>
+  <g style="vector-effect: non-scaling-stroke;" stroke="null" display="none" overflow="visible" y="0" x="0" height="100%" width="100%" id="canvasGrid">
+   <rect fill="url(#gridpattern)" stroke-width="0" y="0" x="0" height="100%" width="100%"/>
+  </g>
+ </g>
+ <g stroke="null">
+  <title stroke="null">Layer 1</title>
+  <path filter="url(#svg_15_blur)" stroke="#000000" transform="rotate(-180 402.56231689453125,385.6256408691406) " id="svg_15" d="m170.062591,153.125792l464.999713,0l0,371.999687l-232.500013,93.000023l-232.499966,-93.000023l0.000265,-371.999687z" stroke-width="75" fill="none"/>
+ </g>
+</svg>
