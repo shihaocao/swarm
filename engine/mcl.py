@@ -1,10 +1,12 @@
 from . import agent
 from . import render
+from . import genlog
 import numpy as np
 
 class MCL:
     def __init__(self):
         self._render = render.Render()
+        
         self._agent_bank = []
 
         self._config = {
@@ -22,6 +24,8 @@ class MCL:
         
         self._terminate = False
         self._world_max_steps = self._config['world_max_steps']
+        
+        self._log_generator = genlog.Genlog(self._world, self.gen_world)        
         
     def gen_world(self):
         wd = self._config['world_dim']
@@ -48,7 +52,7 @@ class MCL:
             for x,y in team_x_pos_list[team_num]:
                 self._agent_bank.append(agent.Agent(team_num, id_counter, x, y))
                 id_counter += 1
-                
+    
     def setup(self):
         print("[ mcl ] Start")
         print('[ mcl ] Setup Finished')
