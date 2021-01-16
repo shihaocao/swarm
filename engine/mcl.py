@@ -18,14 +18,14 @@ class MCL:
 
         self.gen_agents()
 
-        self._age = 0
+        self._ccno= 0
             
-        self._world = self.gen_world()
+        self._worlds = [self.gen_world()]
         
         self._terminate = False
         self._world_max_steps = self._config['world_max_steps']
         
-        self._log_generator = genlog.Genlog(self._world, self.gen_world)        
+        self._log_generator = genlog.Genlog(self._worlds, self._config)        
         
     def gen_world(self):
         wd = self._config['world_dim']
@@ -56,10 +56,10 @@ class MCL:
     def setup(self):
         print("[ mcl ] Start")
         print('[ mcl ] Setup Finished')
-        while self._age < self._world_max_steps:
+        while self._ccno< self._world_max_steps:
             self.loop()
         print("[ mcl ] World Max Steps Reached")
-        print(self._world)
+        print(self._worlds[self._ccno])
 
         self.clean_up()
 
@@ -73,7 +73,7 @@ class MCL:
         
         self._render.execute()
 
-        self._age += 1
+        self._ccno += 1
         
     def clean_up(self):
         pass
