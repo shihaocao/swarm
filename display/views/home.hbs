@@ -279,6 +279,7 @@
 				var reader = new FileReader();
 				reader.onload = function(event) {
 					// do stuff here
+					console.log("attempt to load data")
 					loadData(event.target.result);
 				}
 				reader.readAsText(event.target.files[0]);
@@ -286,6 +287,7 @@
 		}
 
 		function loadData(data) {
+			console.log("LOAD DATA CALLED")
 			var lines = data.split("\n");
 
 			if (lines[0].substring(0, 8) == "Team 1: ") {
