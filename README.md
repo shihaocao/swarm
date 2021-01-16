@@ -8,5 +8,8 @@ To start the engine:
 
 ### Display System
 
-The viewer system was based off of rzhan11's battlehack2020 viewer:
-https://github.com/rzhan11/battlehack2020-viewer
+The viewer system was based off of CodingClash2020's viewer
+https://github.com/CodingClash/codingclash2020
+
+To use it, go into the visualizer folder, and open a log file.
+(example logs are sent to the logs/ folder)
