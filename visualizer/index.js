@@ -1,5 +1,5 @@
 // Sizing data
-const size = 40;
+let size = 32;
 let [board_size, block_size] = [undefined, undefined];
 
 // Game data
@@ -9,14 +9,16 @@ let bchain = [];
 let info = [];
 let general = [];
 
-let piece_counts = {"100": 0,
+let piece_counts = {"0": 0,
+                    "100": 0,
                     "200": 0
                     };
 
 let default_piece_counts = piece_counts;
 
-const filenameDict = {"100": "red_right.svg",
-                      "200": "blue_right.svg"
+const filenameDict = {  "0": "empty.svg",
+                        "100": "red_right.svg",
+                        "200": "blue_right.svg"
                     };
 let gameData = {};
 
@@ -201,10 +203,30 @@ function processReplay(data){
     info = [];
     bchain = [];
     let roundNum = -1;
+    let world_size = 0;
     for (index = 0; index < content.length; index++) {
         let line = content[index];
-        if (line.startsWith("#")){
-            boards.push(line.substr(1).split(" "));
+        if(line.startsWith("!")){
+            let res = line.substr(1).replace("world_dim:","")
+            world_size = parseInt(res);
+            console.log('board size is now')
+            console.log(world_size)
+            size = world_size;
+        }
+        else if (line.startsWith("#")){
+            let temp_world = [];
+            index++;
+            
+            for(b_index = 0; b_index < world_size; b_index++){
+                line = content[index];
+                nl = line.trim().split(" ")
+                console.log("nl ${nl}")
+                temp_world = temp_world.concat(nl)
+                index++;
+            }
+            console.log("TEMP WORLD");
+            console.log(temp_world);
+            boards.push(temp_world);
             dlogs.push([]);
             bchain.push([]);
             info.push({});
@@ -242,6 +264,7 @@ function processReplay(data){
         }
     }
     $("#roundRange").attr("max", boards.length - 1);
+    console.log(boards);
     updateBoardNum(0);
 };
 

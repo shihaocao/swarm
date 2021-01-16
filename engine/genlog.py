@@ -37,15 +37,13 @@ class Genlog:
         print('[ GENLOG ] Writing to file.')
         
         for world in worlds:
+            self.lprint("#")
             for row in world:
-                self.log_file.write("#")
                 for entry in row:
                     self.log_file.write(str(entry))
                     self.log_file.write(' ')
                 self.log_file.write('\n')
-            self.log_file.write('\n')
                 
-        
         print('[ GENLOG ] Done.')        
         
         self.log_file.close()
