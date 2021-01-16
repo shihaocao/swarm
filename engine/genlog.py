@@ -1,28 +1,53 @@
-from os import listdir
+import os
 from os.path import isfile, join 
 import string
 import random
 
 class Genlog:
     def __init__(self, world_data, config_data):
-        logdir = "../logs/"        
-        self.existing_files = [f for f in listdir(logdir) if isfile(join(logdir, f))]
+        thisdir = os.getcwd()
+        logdir = thisdir + "/logs"
+                
+        existing_files = [f for f in os.listdir(logdir) if isfile(join(logdir, f))]
         
-        char_bank = string.ascii_lowercase + string.digits
+        existing_nums = [x[:-4] for x in existing_files]
+        existing_nums = [int(x) for x in existing_nums if x.isdigit()]
         
-        len_str = 10
-        rand_name = ''.join(random.choice(char_bank) for i in range(len_str))
-        rand_name += '.txt'
-        self.log_file = open("demofile3.txt", "w")
-        self.log_file.write("header")
-        self.log_file.write("header")
+        file_num = 1
+        while(file_num in existing_nums):
+            file_num += 1
+                    
+        new_file_name = str(file_num)
+        self._new_file_name = 'log' + new_file_name +'.txt'
+        
+        return
 
-        self.log_file.close()
-        
+    def lprint(self, s : str):
+        self.log_file.write(s)
+        self.log_file.write("\n")
         return
 
     def log_header(self):
         return
     
-    def log_files(self):
+    def log_files(self, config, worlds):
+        self.log_file = open("logs/" + self._new_file_name, "w")
+        self.lprint("Header:")
+        self.lprint(f"size: {config['world_dim']}")
+        
+        print('[ GENLOG ] Writing to file.')
+        
+        for world in worlds:
+            for row in world:
+                for entry in row:
+                    self.log_file.write(str(entry))
+                    self.log_file.write(' ')
+                self.log_file.write('\n')
+            self.log_file.write('\n')
+                
+        
+        print('[ GENLOG ] Done.')        
+        
+        self.log_file.close()
+
         return

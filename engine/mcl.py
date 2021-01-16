@@ -3,6 +3,9 @@ from . import render
 from . import genlog
 import numpy as np
 
+# to prevent print truncation
+np.set_printoptions(threshold=np.inf)
+
 class MCL:
     def __init__(self):
         self._render = render.Render()
@@ -11,16 +14,17 @@ class MCL:
 
         self._config = {
             'num_teams': 2,
-            'team_pos': [[(1,1),(3,3)],[(97,97),(99,99)]],
-            'world_dim': 100,
-            'world_max_steps': 1000
+            'team_pos': [[(1,1),(3,3)],[(29,29),(31,31)]],
+            'world_dim': 32,
+            'world_max_steps': 500
         }
 
         self.gen_agents()
 
         self._ccno= 0
-            
-        self._worlds = [self.gen_world()]
+        
+        self._current_world = self.gen_world()
+        self._worlds = [np.array(self._current_world)]
         
         self._terminate = False
         self._world_max_steps = self._config['world_max_steps']
@@ -73,9 +77,13 @@ class MCL:
         
         self._render.execute()
 
+        ### Progress forward
+        
+        self._worlds.append(np.array(self._current_world))
         self._ccno += 1
         
     def clean_up(self):
+        self._log_generator.log_files(self._config, self._worlds)
         pass
         
     def mutate_under_lethal(self):
