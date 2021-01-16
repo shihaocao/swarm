@@ -8,42 +8,16 @@ let dlogs = [];
 let bchain = [];
 let info = [];
 let general = [];
-let piece_counts = {"t": 0,
-                    "g": 0,
-                    "h": 0,
-                    "b": 0,
-                    "s": 0,
-                    "e": 0,
-                    "r": 0,
-                    "u": 0,
-                    "T": 0,
-                    "G": 0,
-                    "H": 0,
-                    "B": 0,
-                    "S": 0,
-                    "E": 0,
-                    "R": 0,
-                    "U": 0
+
+let piece_counts = {"100": 0,
+                    "200": 0
                     };
-const filenameDict = {"t": "tank_b.svg",
-                      "g": "gunner_b.svg",
-                      "h": "hq_b.svg",
-                      "T": "tank_r.svg",
-                      "G": "gunner_r.svg",
-                      "H": "hq_r.svg",
-                      "n": "grass.svg",
-                      "B": "builder_r.svg",
-                      "b": "builder_b.svg",
-                      "S": "barracks_r.svg",
-                      "s": "barracks_b.svg",
-                      "E": "grenade_launcher_r.svg",
-                      "e": "grenade_launcher_b.svg",
-                      "R": "oil_refinery_r.svg",
-                      "r": "oil_refinery_b.svg",
-                      "U": "turret_r.svg",
-                      "u": "turret_b.svg",
-                      "w": "wall.svg",
-                      "W": "wall.svg"};
+
+let default_piece_counts = piece_counts;
+
+const filenameDict = {"100": "red_right.svg",
+                      "200": "blue_right.svg"
+                    };
 let gameData = {};
 
 let selectedID = "";
@@ -99,23 +73,7 @@ function updateInfo(){
 }
 
 function drawBoard(){
-    piece_counts = {"t": 0,
-                        "g": 0,
-                        "h": 0,
-                        "b": 0,
-                        "s": 0,
-                        "e": 0,
-                        "r": 0,
-                        "u": 0,
-                        "T": 0,
-                        "G": 0,
-                        "H": 0,
-                        "B": 0,
-                        "S": 0,
-                        "E": 0,
-                        "R": 0,
-                        "U": 0
-                        };
+    piece_counts = default_piece_counts;
 
     let idx = 0;
     let board_string = boards[board_num];
@@ -246,7 +204,7 @@ function processReplay(data){
     for (index = 0; index < content.length; index++) {
         let line = content[index];
         if (line.startsWith("#")){
-            boards.push(line.substr(1));
+            boards.push(line.substr(1).split(" "));
             dlogs.push([]);
             bchain.push([]);
             info.push({});
