@@ -75,7 +75,7 @@ class ActorNetwork(object):
             self.network_params) + len(self.target_network_params)
 
     def create_actor_network(self):
-        inputs = tflearn.input_data(shape=[None, self.s_dim])
+        inputs = tflearn.input_data(shape=[None, *self.s_dim])
         net = tflearn.fully_connected(inputs, 400)
         net = tflearn.layers.normalization.batch_normalization(net)
         net = tflearn.activations.relu(net)
@@ -161,7 +161,7 @@ class CriticNetwork(object):
         self.action_grads = tf.gradients(ys=self.out, xs=self.action)
 
     def create_critic_network(self):
-        inputs = tflearn.input_data(shape=[None, self.s_dim])
+        inputs = tflearn.input_data(shape=[None, *self.s_dim])
         action = tflearn.input_data(shape=[None, self.a_dim])
         net = tflearn.fully_connected(inputs, 400)
         net = tflearn.layers.normalization.batch_normalization(net)
@@ -285,12 +285,16 @@ def train(sess, env, args, actor, critic, actor_noise):
 
             # Added exploration noise
             #a = actor.predict(np.reshape(s, (1, 3))) + (1. / (1. + i))
-            a = actor.predict(np.reshape(s, (1, actor.s_dim))) + actor_noise()
+            a = actor.predict(np.reshape(s, (1, *actor.s_dim))) + actor_noise()
+            move_decision = np.argmax(a[0])
+            
+            # CODE THAT PICKS THE HIGHEST MOVE THATS NOT ILLEGAL?
+            # MAYBE PENALIZE ILLEGAL MOVES???
+            
+            s2, r, terminal, info = env.step(move_decision)
 
-            s2, r, terminal, info = env.step(a[0])
-
-            replay_buffer.add(np.reshape(s, (actor.s_dim,)), np.reshape(a, (actor.a_dim,)), r,
-                              terminal, np.reshape(s2, (actor.s_dim,)))
+            replay_buffer.add(np.reshape(s, (*actor.s_dim,)), np.reshape(a, (actor.a_dim,)), r,
+                              terminal, np.reshape(s2, (*actor.s_dim,)))
 
             # Keep adding experience to the memory until
             # there are at least minibatch size samples
@@ -345,23 +349,31 @@ def main(args):
 
     with tf.compat.v1.Session() as sess:
 
+        if args['env'] == 'gym_go:go-v0':
+            env = gym.make('gym_go:go-v0', size=7, komi=0, reward_method='real')
+        else:
+            env = gym.make(args['env'])
+            
+        env = gym.make(args['env'])
         env = gym.make('gym_go:go-v0', size=7, komi=0, reward_method='real')
+            
+            
         np.random.seed(int(args['random_seed']))
         tf.compat.v1.set_random_seed(int(args['random_seed']))
         env.seed(int(args['random_seed']))
 
-        # state_dim = env.observation_space.shape[0]
-        # action_dim = env.action_space.shape[0]
+        state_dim = env.observation_space.shape
+        action_dim = env.action_space.n
         
         print(env.observation_space)
-        print(env.action_space)        
+        meme = env.action_space
         
-        state_dim = 1
-        action_dim = 1
+        # state_dim = 1
+        # action_dim = 1
         
-        action_bound = env.action_space.high
+        action_bound = action_dim
         # Ensure action bound is symmetric
-        assert (env.action_space.high == -env.action_space.low)
+        # assert (env.action_space.high == -env.action_space.low)
 
         actor = ActorNetwork(sess, state_dim, action_dim, action_bound,
                              float(args['actor_lr']), float(args['tau']),
