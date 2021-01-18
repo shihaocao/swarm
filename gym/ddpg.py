@@ -44,12 +44,12 @@ class ActorNetwork(object):
         # Actor Network
         self.inputs, self.out, self.scaled_out = self.create_actor_network()
 
-        self.network_params = tf.trainable_variables()
+        self.network_params = tf.compat.v1.trainable_variables()
 
         # Target Network
         self.target_inputs, self.target_out, self.target_scaled_out = self.create_actor_network()
 
-        self.target_network_params = tf.trainable_variables()[
+        self.target_network_params = tf.compat.v1.trainable_variables()[
             len(self.network_params):]
 
         # Op for periodically updating target network with online network
@@ -60,16 +60,16 @@ class ActorNetwork(object):
                 for i in range(len(self.target_network_params))]
 
         # This gradient will be provided by the critic network
-        self.action_gradient = tf.placeholder(tf.float32, [None, self.a_dim])
+        self.action_gradient = tf.compat.v1.placeholder(tf.float32, [None, self.a_dim])
 
         # Combine the gradients here
         self.unnormalized_actor_gradients = tf.gradients(
             self.scaled_out, self.network_params, -self.action_gradient)
-        self.actor_gradients = list(map(lambda x: tf.div(x, self.batch_size), self.unnormalized_actor_gradients))
+        self.actor_gradients = list(map(lambda x: tf.compat.v1.div(x, self.batch_size), self.unnormalized_actor_gradients))
 
         # Optimization Op
-        self.optimize = tf.train.AdamOptimizer(self.learning_rate).\
-            apply_gradients(zip(self.actor_gradients, self.network_params))
+        self.optimize = tf.optimizers.Adam(self.learning_rate)
+        # self.optimize = self.optimize.apply_gradients(zip(self.actor_gradients, self.network_params))
 
         self.num_trainable_vars = len(
             self.network_params) + len(self.target_network_params)
@@ -131,12 +131,12 @@ class CriticNetwork(object):
         # Create the critic network
         self.inputs, self.action, self.out = self.create_critic_network()
 
-        self.network_params = tf.trainable_variables()[num_actor_vars:]
+        self.network_params = tf.compat.v1.trainable_variables()[num_actor_vars:]
 
         # Target Network
         self.target_inputs, self.target_action, self.target_out = self.create_critic_network()
 
-        self.target_network_params = tf.trainable_variables()[(len(self.network_params) + num_actor_vars):]
+        self.target_network_params = tf.compat.v1.trainable_variables()[(len(self.network_params) + num_actor_vars):]
 
         # Op for periodically updating target network with online network
         # weights with regularization
@@ -146,12 +146,11 @@ class CriticNetwork(object):
                 for i in range(len(self.target_network_params))]
 
         # Network target (y_i)
-        self.predicted_q_value = tf.placeholder(tf.float32, [None, 1])
+        self.predicted_q_value = tf.compat.v1.placeholder(tf.float32, [None, 1])
 
         # Define loss and optimization Op
         self.loss = tflearn.mean_square(self.predicted_q_value, self.out)
-        self.optimize = tf.train.AdamOptimizer(
-            self.learning_rate).minimize(self.loss)
+        self.optimize = tf.optimizers.Adam(self.learning_rate).minimize(self.loss, var_list=[self.predicted_q_value, self.out])
 
         # Get the gradient of the net w.r.t. the action.
         # For each action in the minibatch (i.e., for each x in xs),
@@ -343,11 +342,11 @@ def train(sess, env, args, actor, critic, actor_noise):
 
 def main(args):
 
-    with tf.Session() as sess:
+    with tf.compat.v1.Session() as sess:
 
         env = gym.make(args['env'])
         np.random.seed(int(args['random_seed']))
-        tf.set_random_seed(int(args['random_seed']))
+        tf.compat.v1.set_random_seed(int(args['random_seed']))
         env.seed(int(args['random_seed']))
 
         state_dim = env.observation_space.shape[0]
