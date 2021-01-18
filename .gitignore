@@ -5,3 +5,7 @@ venv/
 
 # logs
 logs/
+
+# gym
+gym/results
+results/
