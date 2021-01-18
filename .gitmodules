@@ -1,0 +1,3 @@
+[submodule "lib/GymGo"]
+	path = lib/GymGo
+	url = https://github.com/aigagror/GymGo.git
