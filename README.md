@@ -17,3 +17,8 @@ To use it, go into the visualizer folder, and open a log file.
 # OpenAI Gym
 Development in the gym/ folder is based off of OpenAI Gym, and:
 https://github.com/pemami4911/deep-rl
+https://pemami4911.github.io/blog/2016/08/21/ddpg-rl.html
+
+# Go environment
+the go script uses this go environment
+https://github.com/aigagror/GymGo

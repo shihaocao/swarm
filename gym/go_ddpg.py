@@ -85,7 +85,7 @@ class ActorNetwork(object):
         # Final layer weights are init to Uniform[-3e-3, 3e-3]
         w_init = tflearn.initializations.uniform(minval=-0.003, maxval=0.003)
         out = tflearn.fully_connected(
-            net, self.a_dim, activation='tanh', weights_init=w_init)
+            net, self.a_dim, activation='relu', weights_init=w_init)
         # Scale output to -action_bound to action_bound
         scaled_out = tf.multiply(out, self.action_bound)
         return inputs, out, scaled_out
@@ -286,11 +286,34 @@ def train(sess, env, args, actor, critic, actor_noise):
             # Added exploration noise
             #a = actor.predict(np.reshape(s, (1, 3))) + (1. / (1. + i))
             a = actor.predict(np.reshape(s, (1, *actor.s_dim))) + actor_noise()
-            move_decision = np.argmax(a[0])
             
             # CODE THAT PICKS THE HIGHEST MOVE THATS NOT ILLEGAL?
             # MAYBE PENALIZE ILLEGAL MOVES???
+            b_pieces = np.array(s[0], dtype=int)
+            w_pieces = np.array(s[1], dtype=int)
+            ko_illegals = np.array(s[3], dtype=int)
+
+            invalid_moves = np.bitwise_or(b_pieces,w_pieces)
+            invalid_moves = np.bitwise_or(invalid_moves,ko_illegals)
+            invalid_moves = np.clip(invalid_moves, 0, 1)
+            move_preserve_mask = (invalid_moves - 1)*-1
+            move_preserve_mask = np.append(move_preserve_mask.flatten(),1)
             
+            masked_moves = a[0]*move_preserve_mask
+            move_decision = np.argmax(masked_moves)
+
+            # debug
+            # turn = 'Black'
+            # if int(s[2][0][0]):
+            #     turn = 'White'
+                 
+            # row = move_decision % 7
+            # col = move_decision // 7
+            
+            # print(move_preserve_mask)
+            # print(masked_moves)
+            # print(f"{turn}: {row} {col}")
+
             s2, r, terminal, info = env.step(move_decision)
 
             replay_buffer.add(np.reshape(s, (*actor.s_dim,)), np.reshape(a, (actor.a_dim,)), r,
@@ -419,7 +442,7 @@ if __name__ == '__main__':
     parser.add_argument('--monitor-dir', help='directory for storing gym results', default='./results/gym_ddpg')
     parser.add_argument('--summary-dir', help='directory for storing tensorboard info', default='./results/tf_ddpg')
 
-    parser.set_defaults(render_env=True)
+    parser.set_defaults(render_env=False)
     parser.set_defaults(use_gym_monitor=True)
     
     args = vars(parser.parse_args())
