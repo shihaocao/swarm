@@ -11,4 +11,12 @@ print(c)
 print(d)
 print(e)
 
-print(e.flatten().append(1))
+# print(e.flatten().append(1))
+
+yeet = np.arange(24).reshape((2,3,4))
+print('firts')
+print(yeet)
+
+print('r90')
+yeet = np.rot90(yeet, 1,axes=(1,2))
+print(yeet)
