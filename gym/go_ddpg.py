@@ -271,17 +271,22 @@ def train(sess, env, args, actor, critic, actor_noise):
     # in other environments.
     # tflearn.is_training(True)
 
-    for i in range(int(args['max_episodes'])):
+
+    for i in range(1,int(args['max_episodes'])):
 
         s = env.reset()
 
         ep_reward = 0
         ep_ave_max_q = 0
+        debug = False
+
 
         for j in range(int(args['max_episode_len'])):
 
-            if args['render_env']:
+            if args['render_env'] and i % args['render_period'] == 0:
+                print("RENDER")
                 env.render()
+                debug=True
 
             # Added exploration noise
             #a = actor.predict(np.reshape(s, (1, 3))) + (1. / (1. + i))
@@ -299,20 +304,26 @@ def train(sess, env, args, actor, critic, actor_noise):
             move_preserve_mask = (invalid_moves - 1)*-1
             move_preserve_mask = np.append(move_preserve_mask.flatten(),1)
             
-            masked_moves = a[0]*move_preserve_mask
+            # print(move_preserve_mask)
+            
+            min_val = np.min(a[0])
+            move_matrix = a[0] - (min_val - 1.0)
+            masked_moves = move_matrix*move_preserve_mask
+            
             move_decision = np.argmax(masked_moves)
 
             # debug
-            # turn = 'Black'
-            # if int(s[2][0][0]):
-            #     turn = 'White'
+            turn = 'Black'
+            if int(s[2][0][0]):
+                turn = 'White'
                  
-            # row = move_decision % 7
-            # col = move_decision // 7
+            row = move_decision % 7
+            col = move_decision // 7
             
             # print(move_preserve_mask)
             # print(masked_moves)
-            # print(f"{turn}: {row} {col}")
+            if debug:
+                print(f"{turn}: {row} {col}")
 
             s2, r, terminal, info = env.step(move_decision)
 
@@ -367,6 +378,7 @@ def train(sess, env, args, actor, critic, actor_noise):
                 print('| Reward: {:d} | Episode: {:d} | Qmax: {:.4f}'.format(int(ep_reward), \
                         i, (ep_ave_max_q / float(j))))
                 break
+        env.close()
 
 def main(args):
 
@@ -407,8 +419,7 @@ def main(args):
                                float(args['gamma']),
                                actor.get_num_trainable_vars())
         
-        actor_noise = OrnsteinUhlenbeckActionNoise(mu=np.zeros(action_dim))
-
+        actor_noise = OrnsteinUhlenbeckActionNoise(mu=np.zeros(action_dim),sigma=10)
         if args['use_gym_monitor']:
             if not args['render_env']:
                 env = wrappers.Monitor(
@@ -435,14 +446,16 @@ if __name__ == '__main__':
     # run parameters
     parser.add_argument('--env', help='choose the gym env- tested on {Pendulum-v0}', default='Pendulum-v0')
     parser.add_argument('--random-seed', help='random seed for repeatability', default=1234)
-    parser.add_argument('--max-episodes', help='max num of episodes to do while training', default=1000)
-    parser.add_argument('--max-episode-len', help='max length of 1 episode', default=1000)
-    parser.add_argument('--render-env', help='render the gym env', action='store_true')
+    parser.add_argument('--max-episodes', help='max num of episodes to do while training', default=10000)
+    parser.add_argument('--max-episode-len', help='max length of 1 episode', default=49)
+    parser.add_argument('--render-env', help='render the gym env', default=True)
+
+    parser.add_argument('--render-period', help='# of episodes before one is rendered', default=500)
+
     parser.add_argument('--use-gym-monitor', help='record gym results', action='store_true')
     parser.add_argument('--monitor-dir', help='directory for storing gym results', default='./results/gym_ddpg')
     parser.add_argument('--summary-dir', help='directory for storing tensorboard info', default='./results/tf_ddpg')
 
-    parser.set_defaults(render_env=False)
     parser.set_defaults(use_gym_monitor=True)
     
     args = vars(parser.parse_args())
